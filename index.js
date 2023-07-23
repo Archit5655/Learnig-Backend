@@ -1,11 +1,20 @@
 import express from 'express';
+import fs from 'fs'
+import path from 'path';
 
 const app= express()
 
 
 app.get("/products",(req,res)=>{
+const loc=path.resolve()
 
-            res.status(400).send("merimarzi")
+//  showing file data from index.html
+
+// res.sendFile(path.join(loc,"./index.html"))
+res.render()
+
+
+
 })
 
 
