@@ -1,37 +1,27 @@
-import express from 'express';
-import fs from 'fs'
-import path from 'path';
-
-const app= express()
+import express from "express";
+import fs from "fs";
+import path from "path";
+const users = [];
+const app = express();
 // Setting up view engine
-app.set("view engine",'ejs')
+app.use(express.static(path.join(path.resolve(), "public")));
+// Using middleware
+app.use(express.urlencoded({extended:true}))
+app.set("view engine", "ejs");
 
-
-app.get("/products",(req,res)=>{
-    //  showing file data from index.html
-// const loc=path.resolve()
-
-
-// res.sendFile(path.join(loc,"./index.html"))
-// 
-
-
-// Using ejs to make our dat dynamic using tag  <% %> we can write javascript in it and can pass to our file by using render function and changing the file name from .html to .ejs and putting that file under the views folder 
-
-
-
-res.render('index.ejs',{name:"Archit" ,HEIGHT:"34"})
-
-
-
-
-})
-
-
-
-
-
-
- app.listen(5000,()=>{
-    console.log("Server ki maka bhosda")
- })
+app.get("/", (req, res) => {
+  res.render("index");
+});
+app.get("/success", (req, res) => {
+  res.render("success");
+});
+app.post("/contact", (req, res) => {
+  users.push({ username: req.body.name, email: req.body.email });
+  res.redirect("/success");
+});
+app.get("/users", (req, res) => {
+    res.json({users})
+  });
+app.listen(5000, () => {
+  console.log("Server ki maka bhosda");
+});
