@@ -3,18 +3,19 @@ import fs from "fs";
 import path from "path";
 import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
+import jwt from "jsonwebtoken";
 //Note- dont leave and space in the url to connect to mongo
 mongoose
   .connect("mongodb://127.0.0.1:27017", { dbName: "backend" })
   .then(() => console.log("connected to db"))
   .catch((e) => console.log(e));
 
-const msgSchema = new mongoose.Schema({
+const userschema = new mongoose.Schema({
   name: String,
   email: String,
 });
 
-const msg = mongoose.model("messeges", msgSchema);
+const user = mongoose.model("user", userschema);
 
 const app = express();
 // Setting up view engine
@@ -23,39 +24,46 @@ app.use(express.static(path.join(path.resolve(), "public")));
 app.use(express.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 app.use(cookieParser());
+const secret="gbgregergerb"
+const isauth =  async (req, res, next) => {
+  const { token } = req.cookies;
+  if (token) {
+  const decode =  jwt.verify(token,secret);
+  req.userid = await user.findById(decode._id);
+  console.log(decode)
 
-app.get("/", (req, res) => {
-const{token}=req.cookies;
-if (token) {
-  res.render("logout")
-  
-} else {
-  
-  res.render("login");
-}
-});
-app.get("/success", (req, res) => {
-  res.render("success");
+    // next is like break function it will directly jump  to next route
+    next();
+  } else {
+    res.render("login");
+  }
+};
+
+app.get("/", isauth, (req, res) => {
+  // console.log(req.userid)
+  res.render("logout");
 });
 
-app.post("/contact",  async(req, res) => {
+app.post("/login", async (req, res) => {
+  const { name, email } = req.body;
+  const userid = await user.create({ name, email });
+  const token=jwt.sign({ _id: userid._id}, secret);
 
-  await msg.create({name:  req.body.name,email: req.body.email})
-  res.redirect("/success");
+  res.cookie("token", token, {
+    httpOnly: true,
+    expires: new Date(Date.now() + 60 * 1000),
+  });
+  res.redirect("/");
 });
-app.get("/users", (req, res) => {
-  res.json({ users });
-});
-app.post("/login" ,(req,res)=>{
-  res.cookie("token","I ma login",{httpOnly:true,expires:new Date(Date.now()+60*1000)})
-  res.redirect("/")
-
-});
-app.post("/logout" ,(req,res)=>{
+app.get("/logout", (req, res) => {
+  console.log(req.body);
   // res.cookie("token","I ma login",{httpOnly:true,expires:new Date(Date.now()+60*1000)})
-  res.redirect("/success")
-
-})
+  res.cookie("token", {
+    httpOnly: true,
+    expires: new Date(Date.now()),
+  });
+  res.redirect("/");
+});
 app.listen(5000, () => {
   console.log("Server ki maka bhosda");
 });
